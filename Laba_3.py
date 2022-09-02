@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 from scipy. special import logsumexp
 import numpy as np
+import time
 
 # Вывод картинок
 def dis(imgarray):
@@ -274,42 +275,77 @@ def sobel(img_conv):
     return grad, theta_adjusted
 
 # Оператор Робетса
-def roberts(img):
-
-
-    grayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def roberts(img_conv):
 
     # Робертс Оператор
-    kernelx = np.array([[-1, 0], [0, 1]], dtype=int)
-    kernely = np.array([[0, -1], [1, 0]], dtype=int)
+    Gx = np.array([[-1, 0], [0, 1]], dtype=int)
+    Gy = np.array([[0, -1], [1, 0]], dtype=int)
 
-    x = cv2.filter2D(grayImage, cv2.CV_16S, kernelx)
-    y = cv2.filter2D(grayImage, cv2.CV_16S, kernely)
+    # Выбираем границы обхода
+    # Свертка по изображению с помощью горизонтального и вертикального фильтров
+    filtered_x = convolve(img_conv, Gx)
+    filtered_y = convolve(img_conv, Gy)
 
-    #   uint8.
-    absX = cv2.convertScaleAbs(x)
-    absY = cv2.convertScaleAbs(y)
+    # Построение отфильтрованных изображений по осям X и Y
+    # plot_two_images_gray(filtered_x, filtered_y, "Filtered X-axis", "Filtered Y-axis")
 
-    roberts = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)
+    # Вычисляется градиент
+    grad = calc_grad(filtered_x, filtered_y)
+
+    # Вычисляем направление
+    theta = calc_dir(filtered_x, filtered_y)
+
+    # Корректировка для отрицательных направлений, делающая все направления положительными
+    theta = pos_dir(theta)
+
+    # Регулировка направления до ближайшего 0, 45, 90 или 135 градусов
+    theta_adjusted = adjust_dir_nearest(theta)
 
     # Графика отображения
     # plot_two_images_gray(img, roberts, "Оригинальное изображение", "Оператор Робертс")
 
-    return roberts
+    return grad, theta_adjusted
 
 # Оператор Превитта
-def prewitt(img):
+def prewitt(img_conv):
+
+    # Оператор Prewitt
+    Gx = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]], dtype=int)
+    Gy = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=int)
+    # Выбираем границы обхода
+    # Свертка по изображению с помощью горизонтального и вертикального фильтров
+    filtered_x = convolve(img_conv, Gx)
+    filtered_y = convolve(img_conv, Gy)
+
+    # Построение отфильтрованных изображений по осям X и Y
+    # plot_two_images_gray(filtered_x, filtered_y, "Filtered X-axis", "Filtered Y-axis")
+
+    # Вычисляется градиент
+    grad = calc_grad(filtered_x, filtered_y)
+
+    # Вычисляем направление
+    theta = calc_dir(filtered_x, filtered_y)
+
+    # Корректировка для отрицательных направлений, делающая все направления положительными
+    theta = pos_dir(theta)
+
+    # Регулировка направления до ближайшего 0, 45, 90 или 135 градусов
+    theta_adjusted = adjust_dir_nearest(theta)
+
+    # Графика отображения
+    # plot_two_images_gray(img, roberts, "Оригинальное изображение", "Оператор Робертс")
+
+    return grad, theta_adjusted
 
 # https://russianblogs.com/article/41811117754/
-def border_selection(img, window_size, sigma):
+def border_selection(img, func, window_size, sigma, up , low):
     # 1 шаг - Делаем черно-белые границы
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # 2 шаг Вычисляем Гаусовское размытие
 
     # Параметры фильтра Гаусса
-    window_size = 5
-    sigma = 5
+
 
     # Свертка изображения с помощью фильтра Гаусса
     img_conv = convolve(gray, gauss_filter(window_size, sigma))
@@ -318,7 +354,7 @@ def border_selection(img, window_size, sigma):
     # plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
 
     # Шаг 3. Оператор Собеля
-    grad, theta_adjusted = sobel(img_conv)
+    grad, theta_adjusted = func(img_conv)
 
     # Шаг 4 Подавление немаксимумов
     # (если значение градиента пикселя больше соседних, то пиксель определяется как граничный,
@@ -335,25 +371,34 @@ def border_selection(img, window_size, sigma):
 
     # Шаг 5
     # Пороговая фильтрация(только границы) два порога: низ-выс значения градиента(процент от максимума) 20% 40%
-
-    t_low = max_grad / 100 * 10
-    t_high = max_grad / 100 * 15
+    max_grad = np.max(grad)
+    t_low = max_grad / 100 * up
+    t_high = max_grad / 100 * low
 
     img_edges = 255 - (hysterisis_thresh(dom_BW, t_low, t_high) * 255)
 
     return img_edges
 
-
 def main():
-    img = cv2.imread(r'4.jpg')
-
+    # Разрешения 1280 х 720
+    img = cv2.imread(r'air.jpg')
     # Внутренняя реализация
     # edges = cv2.Canny(img, 100, 400, L2gradient=False)
     # edges = cv2.border_selection(img, 3, 0.1)
-    rob = Roberts(img)
+    start_time = time.time()
+    rob = border_selection(img, roberts, 5, 0.5,15,40)
+    # print("--- %s seconds ---" % (time.time() - start_time))
+    start_time = time.time()
+    sob = border_selection(img, sobel, 5, 0.5,15,40)
+    # print("--- %s seconds ---" % (time.time() - start_time))
+    start_time = time.time()
+    prew = border_selection(img, prewitt, 5, 0.5,15,40)
+    # print("--- %s seconds ---" % (time.time() - start_time))
     # edges = border_selection(img)
     # https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html#gacea54f142e81b6758cb6f375ce782c8d
-    cv2.imshow('Display window', rob)
+    cv2.imshow('roberts', rob)
+    cv2.imshow('sobel', sob)
+    cv2.imshow('prewitt', prew)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
