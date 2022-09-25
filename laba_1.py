@@ -53,7 +53,7 @@ def readWeb():
     cv2.destroyAllWindows()
 
 def show_from_telephone():
-    url = 'http://10.102.245.146:8080/shot.jpg'
+    url = 'http://10.176.71.110:8080/shot.jpg'
     imgResp = urlopen(url)
     imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
     img = cv2.imdecode(imgNp, -1)
