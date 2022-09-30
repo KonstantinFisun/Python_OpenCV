@@ -106,11 +106,25 @@ def display_images(imgarray,scale):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+#   Реализовать размытие Гаусса встроенным методом
+#   библиотеки OpenCV, сравнить результаты с Вашей реализацией.
+def task_3(img,size, sigma):
+
+    # Встроенный метод
+    img_blur = cv2.GaussianBlur(img, (size, size), sigma)
+
+    # Моя реализация
+    image_my_blur = gauss(size, sigma,img)
+
+    Blankimg = np.zeros((200, 200), np.uint8)  # Размер может быть принудительно преобразован любой функцией
+    display_images(([img, Blankimg], [img_blur, image_my_blur]),sigma)
+
 def main():
     img = cv2.imread(r'2.jpg')
-    n = 3
-    sigma = 0.3
-    gauss(n,sigma,img)
+    n = 5
+    sigma = 0.5
+    # gauss(n,sigma,img)
+    task_3(img,n,sigma)
 
 
 
