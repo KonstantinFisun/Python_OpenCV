@@ -144,19 +144,15 @@ def adjust_dir_nearest(theta: np.array) -> np.array:
 def calculate_target_size(img_size: int, kernel_size: int) -> int:
     num_pixels = 0
 
-    # From 0 up to img size (if img size = 224, then up to 223)
     for i in range(img_size):
-        # Add the kernel size (let's say 3) to the current i
         added = i + kernel_size
-        # It must be lower than the image size
-        # Increment if so
         num_pixels = num_pixels + 1 if added <= img_size else num_pixels
 
     return num_pixels
 
-# Perform Convolution of an image with a kernel
+# Применение свертки к img
 def convolve(img: np.array, kernel: np.array) -> np.array:
-    # Getting Target's Image X and Y size
+    # Получаем границы с учетом сверти
     height = calculate_target_size(
         img_size=img.shape[0],
         kernel_size=kernel.shape[0]
@@ -166,22 +162,14 @@ def convolve(img: np.array, kernel: np.array) -> np.array:
         img_size=img.shape[1],
         kernel_size=kernel.shape[1]
     )
-    # Get kernel size
+
     k = kernel.shape[0]
 
-    # 2D array of zeros
     convolved_img = np.zeros((height, width))
 
-    # Iterate over the rows
     for i in range(height):
-        # Iterate over the columns
         for j in range(width):
-            # img[i, j] = individual pixel value
-            # Get the current matrix
             mat = img[i:i + k, j:j + k]
-
-            # Apply the convolution - element-wise multiplication and summation of the result
-            # Store the result to i-th row and j-th column of our convolved_img array
             convolved_img[i, j] = np.sum(np.multiply(mat, kernel))
 
     return convolved_img
@@ -225,7 +213,7 @@ def non_max_supr(grad: np.array, theta: np.array) -> np.array:
 
     return BW
 
-# Hysteresis Thresholding
+# Пороговая фильтраци
 def hysterisis_thresh(BW: np.array, t_low: int, t_high: int) -> np.array:
 
 
@@ -239,6 +227,7 @@ def hysterisis_thresh(BW: np.array, t_low: int, t_high: int) -> np.array:
                                   (BW[i, j+1] > t_high and BW[i, j-1] > t_high) or
                                   (BW[i-1, j-1] > t_high and BW[i-1, j+1] > t_high) or
                                   (BW[i+1, j+1] > t_high and BW[i+1, j-1] > t_high)) or BW[i, j] > t_high else 0
+
 
     return t_res
 
@@ -257,7 +246,7 @@ def border_selection(img):
     img_conv = convolve(gray, gauss_filter(window_size, sigma))
 
     # Построение изображения в оттенках серого и отфильтрованного изображения
-    # plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
+    plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
 
     # 3 шаг Вычисление градиентов функции яркости
 
@@ -271,7 +260,7 @@ def border_selection(img):
     filtered_y = convolve(img_conv, Gy)
 
     # Построение отфильтрованных изображений по осям X и Y
-    # plot_two_images_gray(filtered_x, filtered_y, "Filtered X-axis", "Filtered Y-axis")
+    plot_two_images_gray(filtered_x, filtered_y, "Filtered X-axis", "Filtered Y-axis")
 
     # Вычисляется градиент
     grad = calc_grad(filtered_x, filtered_y)
@@ -314,11 +303,8 @@ def border_selection(img):
     return img_edges
 
 
-
-
-
 def main():
-    img = cv2.imread(r'4.jpg')
+    img = cv2.imread(r'2.jpg')
 
     # Внутренняя реализация
     # edges = cv2.Canny(img, 100, 400, L2gradient=False)
