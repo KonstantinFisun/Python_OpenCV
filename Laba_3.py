@@ -107,6 +107,7 @@ def calc_dir(filtered_x: np.array, filtered_y: np.array) -> np.array:
             theta[i, j] = math.atan2(filtered_y[i, j], filtered_x[i, j])
             theta[i, j] = theta[i, j] * 180 / math.pi
 
+
     return theta
 
 # Убираем отрицательное направление
@@ -140,7 +141,7 @@ def adjust_dir_nearest(theta: np.array) -> np.array:
     return theta_adj
 
 
-# Calculate Convolution's output size for one dimension
+# Получаем границы расчетов
 def calculate_target_size(img_size: int, kernel_size: int) -> int:
     num_pixels = 0
 
@@ -223,11 +224,18 @@ def hysterisis_thresh(BW: np.array, t_low: int, t_high: int) -> np.array:
 
     for i in range(height - 1):
         for j in range(width - 1):
-            t_res[i, j] = 1 if ((BW[i+1, j] > t_high and BW[i-1, j] > t_high) or
-                                  (BW[i, j+1] > t_high and BW[i, j-1] > t_high) or
-                                  (BW[i-1, j-1] > t_high and BW[i-1, j+1] > t_high) or
-                                  (BW[i+1, j+1] > t_high and BW[i+1, j-1] > t_high)) or BW[i, j] > t_high else 0
+            if BW[i, j] > t_high:
+                t_res[i, j] = 1
+            if BW[i, j] < t_low:
+                t_res[i, j] = 0
 
+    for i in range(height - 1):
+        for j in range(width - 1):
+            if((BW[i + 1, j] > t_high or BW[i - 1, j] > t_high) or
+             (BW[i, j + 1] > t_high or BW[i, j - 1] > t_high) or
+             (BW[i - 1, j - 1] > t_high or BW[i - 1, j + 1] > t_high) or
+             (BW[i + 1, j + 1] > t_high or BW[i + 1, j - 1] > t_high)):
+                t_res[i,j] = 1
 
     return t_res
 
@@ -246,7 +254,7 @@ def border_selection(img):
     img_conv = convolve(gray, gauss_filter(window_size, sigma))
 
     # Построение изображения в оттенках серого и отфильтрованного изображения
-    plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
+    # plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
 
     # 3 шаг Вычисление градиентов функции яркости
 
@@ -260,7 +268,7 @@ def border_selection(img):
     filtered_y = convolve(img_conv, Gy)
 
     # Построение отфильтрованных изображений по осям X и Y
-    plot_two_images_gray(filtered_x, filtered_y, "Filtered X-axis", "Filtered Y-axis")
+    # plot_two_images_gray(filtered_x, filtered_y, "Filtered X-axis", "Filtered Y-axis")
 
     # Вычисляется градиент
     grad = calc_grad(filtered_x, filtered_y)
@@ -295,8 +303,8 @@ def border_selection(img):
     # Шаг 5
     # Пороговая фильтрация(только границы) два порога: низ-выс значения градиента(процент от максимума) 20% 40%
 
-    t_low = max_grad // 80
-    t_high = max_grad // 10
+    t_low = max_grad / 100 * 10
+    t_high = max_grad / 100 * 15
 
     img_edges = 255 - (hysterisis_thresh(dom_BW, t_low, t_high) * 255)
 
@@ -304,7 +312,7 @@ def border_selection(img):
 
 
 def main():
-    img = cv2.imread(r'2.jpg')
+    img = cv2.imread(r'4.jpg')
 
     # Внутренняя реализация
     # edges = cv2.Canny(img, 100, 400, L2gradient=False)
