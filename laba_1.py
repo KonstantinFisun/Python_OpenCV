@@ -1,6 +1,7 @@
 import cv2
 from urllib.request import urlopen
 import numpy as np
+import datetime
 
 def show_img():
     img = cv2.imread(r'C:\1.png')
@@ -32,6 +33,18 @@ def readIPWriteTOFile():
     video_writer = cv2.VideoWriter("output.mov", fourcc, 25, (w, h))
     while (True):
         ok, img = video.read()
+
+        if ok:
+            font = cv2.FONT_HERSHEY_SIMPLEX
+
+            dt = str(datetime.datetime.now())
+
+            frame = cv2.putText(img, dt,
+                                (0, 30),
+                                font, 0.5,
+                                (0, 0, 0),
+                                2, cv2.LINE_8)
+
         cv2.imshow('img', img)
         video_writer.write(img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -80,8 +93,8 @@ def show_from_telephone():
 def main():
     # show_img
     # show_video()
-    # readIPWriteTOFile()
-    show_from_telephone()
+    readIPWriteTOFile()
+    # show_from_telephone()
 
 
 if __name__ == "__main__":

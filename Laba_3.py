@@ -140,7 +140,6 @@ def adjust_dir_nearest(theta: np.array) -> np.array:
 
     return theta_adj
 
-
 # Получаем границы расчетов
 def calculate_target_size(img_size: int, kernel_size: int) -> int:
     num_pixels = 0
@@ -239,23 +238,8 @@ def hysterisis_thresh(BW: np.array, t_low: int, t_high: int) -> np.array:
 
     return t_res
 
-
-def border_selection(img):
-    # 1 шаг - Делаем черно-белые границы
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # 2 шаг Вычисляем Гаусовское размытие
-
-    # Параметры фильтра Гаусса
-    window_size = 5
-    sigma = 5
-
-    # Свертка изображения с помощью фильтра Гаусса
-    img_conv = convolve(gray, gauss_filter(window_size, sigma))
-
-    # Построение изображения в оттенках серого и отфильтрованного изображения
-    # plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
-
+# Оператор Собеля
+def sobel(img_conv):
     # 3 шаг Вычисление градиентов функции яркости
 
     # Определяем свертки
@@ -287,6 +271,55 @@ def border_selection(img):
 
     # plot_two_images(theta, theta_adjusted, "Directions", "Positive Directions")
 
+    return grad, theta_adjusted
+
+# Оператор Робетса
+def roberts(img):
+
+
+    grayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Робертс Оператор
+    kernelx = np.array([[-1, 0], [0, 1]], dtype=int)
+    kernely = np.array([[0, -1], [1, 0]], dtype=int)
+
+    x = cv2.filter2D(grayImage, cv2.CV_16S, kernelx)
+    y = cv2.filter2D(grayImage, cv2.CV_16S, kernely)
+
+    #   uint8.
+    absX = cv2.convertScaleAbs(x)
+    absY = cv2.convertScaleAbs(y)
+
+    roberts = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)
+
+    # Графика отображения
+    # plot_two_images_gray(img, roberts, "Оригинальное изображение", "Оператор Робертс")
+
+    return roberts
+
+# Оператор Превитта
+def prewitt(img):
+
+# https://russianblogs.com/article/41811117754/
+def border_selection(img, window_size, sigma):
+    # 1 шаг - Делаем черно-белые границы
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 2 шаг Вычисляем Гаусовское размытие
+
+    # Параметры фильтра Гаусса
+    window_size = 5
+    sigma = 5
+
+    # Свертка изображения с помощью фильтра Гаусса
+    img_conv = convolve(gray, gauss_filter(window_size, sigma))
+
+    # Построение изображения в оттенках серого и отфильтрованного изображения
+    # plot_two_images_gray(gray, img_conv, "Grayscale Image", "Filtered Image")
+
+    # Шаг 3. Оператор Собеля
+    grad, theta_adjusted = sobel(img_conv)
+
     # Шаг 4 Подавление немаксимумов
     # (если значение градиента пикселя больше соседних, то пиксель определяется как граничный,
     # иначе значение пикселя подавляется)
@@ -316,10 +349,11 @@ def main():
 
     # Внутренняя реализация
     # edges = cv2.Canny(img, 100, 400, L2gradient=False)
-
-    edges = border_selection(img)
-
-    cv2.imshow('Display window', edges)
+    # edges = cv2.border_selection(img, 3, 0.1)
+    rob = Roberts(img)
+    # edges = border_selection(img)
+    # https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html#gacea54f142e81b6758cb6f375ce782c8d
+    cv2.imshow('Display window', rob)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 

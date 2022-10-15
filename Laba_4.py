@@ -49,6 +49,34 @@ def motion_detect():
         if not (ret):
             break
 
+        if ok:
+            font = cv2.FONT_HERSHEY_SIMPLEX
+
+            dt = str(datetime.datetime.now())
+
+            frame = cv2.putText(img, dt,
+                                (0, 30),
+                                font, 0.5,
+                                (0, 0, 0),
+                                2, cv2.LINE_8)
+
+        if ret:
+            # describe the type of
+            # font you want to display
+            font = cv2.FONT_HERSHEY_SCRIPT_COMPLEX
+
+            # Get date and time and
+            # save it inside a variable
+            dt = str(datetime.datetime.now())
+
+            # put the dt variable over the
+            # video frame
+            frame = cv2.putText(frame, dt,
+                                (10, 100),
+                                font, 1,
+                                (210, 155, 155),
+                                4, cv2.LINE_8)
+
         # Перевести в черный белый цвет
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
