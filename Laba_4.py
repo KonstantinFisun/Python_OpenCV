@@ -7,7 +7,7 @@ import numpy as np
 def motion_detect():
 
     # Считываем видео из файла
-    cap = cv2.VideoCapture(r'main_video.mov', cv2.CAP_ANY)
+    cap = cv2.VideoCapture(r'output.mov', cv2.CAP_ANY)
 
     # Прочитать первый кадр
     ret, frame = cap.read()
@@ -49,34 +49,6 @@ def motion_detect():
         if not (ret):
             break
 
-        if ok:
-            font = cv2.FONT_HERSHEY_SIMPLEX
-
-            dt = str(datetime.datetime.now())
-
-            frame = cv2.putText(img, dt,
-                                (0, 30),
-                                font, 0.5,
-                                (0, 0, 0),
-                                2, cv2.LINE_8)
-
-        if ret:
-            # describe the type of
-            # font you want to display
-            font = cv2.FONT_HERSHEY_SCRIPT_COMPLEX
-
-            # Get date and time and
-            # save it inside a variable
-            dt = str(datetime.datetime.now())
-
-            # put the dt variable over the
-            # video frame
-            frame = cv2.putText(frame, dt,
-                                (10, 100),
-                                font, 1,
-                                (210, 155, 155),
-                                4, cv2.LINE_8)
-
         # Перевести в черный белый цвет
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -87,6 +59,8 @@ def motion_detect():
 
         # Найти разницу между двумя кадрами в отдельный фрейм
         frame_dif = cv2.absdiff(old_frame, new_frame)
+
+        # print(old_frame[0][0],new_frame[0][0],frame_dif[0][0])
 
         # Провести операцию двоичного разделения для фрейма
         retval, frame_dif = cv2.threshold(frame_dif, 60, 127, cv2.THRESH_BINARY)
