@@ -1,31 +1,54 @@
-#include <stdio.h>
 #include <opencv2/opencv.hpp>
-
-int main(int argc, char** argv)
+#include <iostream>
+using namespace cv;
+using namespace std;
+int main(int argc, char* argv[])
 {
-cv::capture* capture = cv::createFileCapture("f.avi");
-
-if( !capture )
-{
-return -1;
+ //Open the default video camera
+ VideoCapture cap(0);
+ // if not success, exit program
+ if (cap.isOpened() == false)  
+ {
+  cout << "Cannot open the video camera" << endl;
+  cin.get(); //wait for any key press
+  return -1;
+ } 
+ double dWidth = cap.get(CAP_PROP_FRAME_WIDTH); //get the width of frames of the video
+ double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT); //get the height of frames of the video
+ Size frame_size(dWidth, dHeight);
+ int frames_per_second = 10;     
+ //Create and initialize the VideoWriter object 
+ VideoWriter oVideoWriter("MyVideo.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 
+                                                           frames_per_second, frame_size, true); 
+ //If the VideoWriter object is not initialized successfully, exit the program
+ if (oVideoWriter.isOpened() == false) 
+ {
+     cout << "Cannot save the video to a file" << endl;
+     cin.get(); //wait for any key press
+     return -1;
+ }
+ string window_name = "My Camera Feed";
+ namedWindow(window_name); //create a window called "My Camera Feed"
+ while (true)
+ {
+  Mat frame;
+  bool bSuccess = cap.read(frame); // read a new frame from video 
+  //Breaking the while loop if the frames cannot be captured
+  if (bSuccess == false) 
+  {
+   cout << "Video camera is disconnected" << endl;
+   cin.get(); //Wait for any key press
+   break;
+  }
+  //write the video frame to the file
+  oVideoWriter.write(frame); 
+  
+  if (waitKey(10) == 27)
+  {
+   cout << "Esc key is pressed by user. Stoppig the video" << endl;
+   break;
+  }
+ }
+ return 0;
 }
 
-cv::iplImage* bgr_frame = cv::queryFrame( capture );
-double fps = cv::GetCaptureProperty( capture, CV_CAP_PROP_FPS);
-cv::Size size = cv::Size((int)cv::GetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH),
-(int)cv::GetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT));
-cv::VideoWriter* writer = cv::CreateVideoWriter("1.avi", CV_FOURCC('M','J','P','G'), fps, size);
-IplImage* logpolar_frame = cvCreateImage( size, IPL_DEPTH_8U, 3);
-
-while( (bgr_frame=cvQueryFrame(capture)) != NULL )
-{
-cv::LogPolar( bgr_frame, logpolar_frame, cv::Point2D32f(bgr_frame->width/2, bgr_frame->height/2),
-40, CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS );
-cv::WriteFrame( writer, logpolar_frame );
-}
-
-cv::ReleaseVideoWriter( &writer );
-cv::ReleaseImage( &logpolar_frame );
-cv::ReleaseCapture( &capture );
-return(0);
-}
