@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import pytesseract
 import cv2
 
 # Загрузка изображения
@@ -20,9 +21,12 @@ def carplate_extract(image, carplate_haar_cascade):
     # Параметры: Изображение, насколько уменьшается изображение в каждом масштабе, качество обнаружения объектов
     carplate_rects = carplate_haar_cascade.detectMultiScale(image, scaleFactor=1.1, minNeighbors=5)
 
+    carplate_img = []
+    coord = []
     # Выделяем полученный объект
     for x, y, w, h in carplate_rects:
-        carplate_img = image[y+15:y+h-10, x+15:x+w-20]
+        carplate_img.append([image[y+15:y+h-10, x+15:x+w-20],[x,y,w,h]])
+
 
     return carplate_img
 
@@ -46,23 +50,32 @@ def enlarge_img(image, scale_percent):
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     # Открытие изображения
-    carplate_img_rgb = open_img(img_path='car.jpg')
+    carplate_img_rgb = open_img(img_path='stream.jpg')
     # Загрузка предобученной модели
     carplate_haar_cascade = cv2.CascadeClassifier('haarcascade_russian_plate_number.xml')
 
     # Извлекаем координаты
     carplate_extract_img = carplate_extract(carplate_img_rgb, carplate_haar_cascade)
-    # Увеличиваем изображение
-    carplate_extract_img = enlarge_img(carplate_extract_img, 150)
-    plt.imshow(carplate_extract_img)
-    plt.show()
 
-    # Преобразование в оттенки серого
-    carplate_extract_img_gray = cv2.cvtColor(carplate_extract_img, cv2.COLOR_RGB2GRAY)
-    plt.axis('off')
-    plt.imshow(carplate_extract_img_gray, cmap='gray')
-    plt.show()
 
+    for i in carplate_extract_img:
+        # Увеличиваем изображение
+        carplate_extract_img = enlarge_img(i[0], 150)
+
+        plt.imshow(carplate_extract_img)
+        plt.show()
+
+    # # Преобразование в оттенки серого
+    # carplate_extract_img_gray = cv2.cvtColor(carplate_extract_img, cv2.COLOR_RGB2GRAY)
+    # plt.axis('off')
+    # plt.imshow(carplate_extract_img_gray, cmap='gray')
+    # plt.show()
+    #
+    # # Извлекаем текст изображения
+    # print('Номер авто: ', pytesseract.image_to_string(
+    #     carplate_extract_img_gray,
+    #     config='--psm 6 --oem 3 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+    # )
 
 # Точка входа в программу
 if __name__ == '__main__':
